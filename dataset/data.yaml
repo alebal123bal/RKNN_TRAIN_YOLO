@@ -1,0 +1,11 @@
+# Dataset configuration (YOLO format)
+# 'path' is intentionally omitted to keep the dataset portable:
+#   - YOLOv8 (ultralytics) resolves train/val relative to this file's directory.
+#   - The YOLOv5 pipeline injects an absolute 'path' at runtime (see
+#     yolov5_pipeline/_dataset.py), since YOLOv5 resolves against its repo root.
+train: images/train  # train images (relative to this file's dir)
+val: images/valid  # val images (relative to this file's dir)
+
+# Classes
+nc: 1  # number of classes
+names: ['drone']  # class names

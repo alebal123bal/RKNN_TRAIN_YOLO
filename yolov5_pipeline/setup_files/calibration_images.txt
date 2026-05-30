@@ -1,0 +1,7 @@
+dataset/images/train/pic_031.jpg
+dataset/images/train/pic_032.jpg
+dataset/images/train/pic_035.jpg
+dataset/images/train/pic_036.jpg
+dataset/images/train/pic_037.jpg
+dataset/images/train/pic_038.png
+dataset/images/train/pic_039.jpg

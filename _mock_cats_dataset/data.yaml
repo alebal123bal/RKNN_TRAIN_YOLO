@@ -1,0 +1,16 @@
+# Mock Cats Detection Dataset
+# Replace the placeholder .png files with real cat photos (any common format).
+# Label files use YOLO format: <class> <x_center> <y_center> <width> <height>  (all normalised 0–1)
+#
+# Image categories in train/:
+#   basement_neg_*  – domain-specific negatives  (your basement, no cat)
+#   bg_neg_*        – generic background negatives (sky, grass, walls, …)
+#   cat_pos_*       – positives (cat visible; update the .txt bbox to match)
+
+# 'path' is intentionally omitted so it resolves to this file's directory.
+train: images/train
+val:   images/valid
+
+# Classes
+nc: 1
+names: ['cat']
