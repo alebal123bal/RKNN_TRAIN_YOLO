@@ -155,4 +155,8 @@ The conversion step accepts any of the following RKNN platforms via `--platform`
 
 ## License
 
-This project bundles Rockchip's forks of Ultralytics YOLOv8 and YOLOv5 as submodules; refer to their respective `LICENSE` files for the terms covering that code.
+Copyright (C) 2026 alebal123bal
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see [LICENSE](LICENSE) for the full text.
+
+It bundles Rockchip's forks of Ultralytics YOLOv8 and YOLOv5, which are themselves distributed under AGPL-3.0 (see [yolov8/LICENSE](yolov8/LICENSE) and [yolov5/LICENSE](yolov5/LICENSE)). Because the combined work incorporates AGPL-3.0 code, the project as a whole is released under the same license.
