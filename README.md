@@ -62,6 +62,8 @@ The reference single-class `drone` model, trained and validated with this pipeli
 
 > Left column shows the trained PyTorch model; the right detection image is produced by the **INT8 RKNN model running in the RKNN simulator**, confirming quantisation preserves accuracy before on-board deployment. Swap these for your own dataset's outputs.
 
+> **Image credit:** the sample frames above are from the MIT-licensed **Drone Dataset (UAV)** by Mehdi Özel, with this project's detection boxes overlaid. See [res/imgs/DATASET_LICENSE](res/imgs/DATASET_LICENSE) for the copyright and license notice.
+
 ---
 
 ## Features
@@ -209,6 +211,7 @@ The conversion step accepts any of the following RKNN platforms via `--platform`
 
 Output-head layout consumed by the C++ post-processor (640px input shown):
 
+
 ```mermaid
 flowchart LR
     IN["Input<br/>1×3×640×640"]:::in
@@ -231,7 +234,28 @@ flowchart LR
 
 ---
 
+## Acknowledgements
+
+The reference drone build was trained on an **augmented version** of the **Drone Dataset (UAV)** by **Mehdi Özel**, released under the [MIT License](https://spdx.org/licenses/MIT.html). The original data was extended with additional **negative samples** (road/urban backgrounds and dark/blueish basement frames) and **HSV-value augmentation** for low-light robustness.
+
+The dataset itself is **not redistributed** in this repository — download it from the source below. The only dataset frames included here are the two sample images under [res/imgs](res/imgs) (used for the Results section), which carry the dataset's MIT copyright and license notice in [res/imgs/DATASET_LICENSE](res/imgs/DATASET_LICENSE).
+
+- Source: [Kaggle — Drone Dataset (UAV)](https://www.kaggle.com/datasets/dasmehdixtr/drone-dataset-uav?select=drone_dataset_yolo)
+- Dataset Ninja mirror: [datasetninja.com/drone-dataset-uav](https://datasetninja.com/drone-dataset-uav)
+
+```bibtex
+@dataset{drone_dataset_uav_2019,
+  author = {Mehdi Özel},
+  title  = {Drone Dataset (UAV)},
+  year   = {2019},
+  url    = {https://www.kaggle.com/datasets/dasmehdixtr/drone-dataset-uav?select=drone_dataset_yolo}
+}
+```
+
+---
+
 ## License
+
 
 Copyright (C) 2026 alebal123bal
 
