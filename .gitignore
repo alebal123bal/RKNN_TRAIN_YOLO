@@ -49,6 +49,9 @@ weights/
 # Dataset - exclude images and labels, keep config only
 dataset/images/
 dataset/labels/
+dataset/drone_crops/
+
+dataset_specific/
 
 # Cache files
 *.cache

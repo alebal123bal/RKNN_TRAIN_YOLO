@@ -40,10 +40,11 @@ python yolov8_pipeline/train_yolov8.py
 | `--model` | `yolov8n` | Model variant: `yolov8n`, `yolov8s`, `yolov8m`, `yolov8l`, `yolov8x` |
 | `--img` | `640` | Input image size |
 | `--batch` | `16` | Batch size |
-| `--epochs` | `100` | Number of training epochs |
+| `--epochs` | `150` | Number of training epochs |
 | `--device` | `0` | `0` for GPU, `cpu` for CPU |
 | `--data` | `dataset/data.yaml` | Path to the dataset `data.yaml` |
 | `--name` | *(model variant)* | Run name under `runs/train/` |
+| `--small-drone-crops` | *(off)* | Directory of drone crops to enable distant-drone paste augmentation (build once with `build_drone_crops.py`) |
 | `--relu` | *(off)* | Replace SiLU → ReLU for RK3588S NPU friendliness (requires training from scratch) |
 
 Example with custom options:
@@ -59,6 +60,47 @@ python yolov8_pipeline/train_yolov8.py --relu
 ```
 
 Weights are saved to `runs/train/<name>/weights/best.pt` (where `<name>` defaults to the model variant, e.g. `yolov8n`).
+
+### Augmentation notes
+
+The training defaults are tuned for a single-class drone detector that must cope with **distant/small drones** and **complex backgrounds**. In addition to the dark-deployment HSV settings, `train_yolov8.py` enables `copy_paste=0.5`, `scale=0.9`, `mosaic=1.0`, `hsv_s=0.4`, `degrees=10`, and a `cos_lr` schedule over the 150-epoch run. All of this is applied **at training time only** — the dataset files on disk are never modified.
+
+Two optional helpers further target small drones and false positives — see [Step 1b](#step-1b--optional-augmentation-helpers).
+
+---
+
+## Step 1b — (Optional) Augmentation helpers
+
+These address the two hardest failure modes: small/distant drones and false positives on complex backgrounds. All effects are training-time only; the base dataset is never altered.
+
+### Build drone crops (run once)
+
+Extract tightly-cropped drone patches from the labelled training set into `dataset/drone_crops/`. Run this **once** before enabling the paste augmentation.
+
+```bash
+conda activate yolov8
+python yolov8_pipeline/build_drone_crops.py
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--images` | `dataset/images/train` | Training images directory |
+| `--labels` | `dataset/labels/train` | Training labels directory |
+| `--out` | `dataset/drone_crops` | Output crops directory |
+| `--classes` | `0` | Class id(s) to extract |
+| `--min-box` | `12` | Skip source boxes smaller than this many pixels |
+| `--pad` | `0.1` | Fractional padding added around each box |
+
+### Small-drone paste augmentation
+
+Once crops exist, enable the synthetic distant-drone paste augmentation during training by pointing `--small-drone-crops` at the crops directory. It pastes crops at a random 8–40 px size at training time and supervises the model on the matching boxes:
+
+```bash
+conda activate yolov8
+python yolov8_pipeline/train_yolov8.py --small-drone-crops dataset/drone_crops
+```
 
 ---
 
@@ -146,9 +188,11 @@ python yolov8_pipeline/_full_pipeline.py
 | `--model` | `yolov8n` | Model variant: `yolov8n`, `yolov8s`, `yolov8m`, `yolov8l`, `yolov8x` |
 | `--img` | `640` | Input image size |
 | `--batch` | `16` | Batch size |
-| `--epochs` | `100` | Training epochs |
+| `--epochs` | `150` | Training epochs |
 | `--device` | `0` | `0` for GPU, `cpu` for CPU |
 | `--data` | `dataset/data.yaml` | Path to the dataset `data.yaml` |
+| `--name` | *(model variant)* | Run name under `runs/train/` (also used to locate weights for export) |
+| `--small-drone-crops` | *(off)* | Directory of drone crops to enable distant-drone paste augmentation (build once with `build_drone_crops.py`) |
 | `--relu` | *(off)* | Replace SiLU → ReLU for RK3588S NPU friendliness |
 | `--platform` | `rk3588s` | RKNN target platform |
 | `--calibration` | `yolov8_pipeline/setup_files/calibration_images.txt` | INT8 calibration image list |
@@ -164,6 +208,14 @@ python yolov8_pipeline/_full_pipeline.py --skip-train --skip-export --platform r
 Example — full NPU-friendly run with ReLU:
 ```bash
 python yolov8_pipeline/_full_pipeline.py --relu --epochs 150
+```
+
+Example — 960×960 ReLU run with small-drone paste augmentation (build the crops first with `build_drone_crops.py`):
+```bash
+python yolov8_pipeline/_full_pipeline.py \
+  --img 960 --relu \
+  --small-drone-crops dataset/drone_crops \
+  --name yolov8n_960_relu
 ```
 
 ---

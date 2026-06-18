@@ -58,7 +58,7 @@ def main():
     )
     train.add_argument("--img", type=int, default=640, help="Input image size")
     train.add_argument("--batch", type=int, default=16, help="Batch size")
-    train.add_argument("--epochs", type=int, default=100, help="Training epochs")
+    train.add_argument("--epochs", type=int, default=150, help="Training epochs")
     train.add_argument(
         "--device", type=str, default="0", help="'0' for GPU, 'cpu' for CPU"
     )
@@ -67,6 +67,19 @@ def main():
         type=str,
         default="dataset/data.yaml",
         help="Dataset data.yaml",
+    )
+    train.add_argument(
+        "--name",
+        type=str,
+        default=None,
+        help="Run name under runs/train/ (default: the model variant)",
+    )
+    train.add_argument(
+        "--small-drone-crops",
+        type=str,
+        default=None,
+        help="Directory of drone crops to enable distant-drone paste augmentation "
+        "(build it once with build_drone_crops.py). Disabled if omitted.",
     )
 
     # ── Convert parameters ────────────────────────────────────────────────────
@@ -105,7 +118,8 @@ def main():
     args = parser.parse_args()
 
     # Derived artifact paths
-    weights = f"runs/train/{args.model}/weights/best.pt"
+    run_name = args.name or args.model
+    weights = f"runs/train/{run_name}/weights/best.pt"
     stem = f"best_{args.model}_{args.img}"
     onnx_raw = _artifact(stem, ".onnx")
     onnx_fixed = _artifact(stem, "_fixed.onnx")
@@ -131,6 +145,10 @@ def main():
             "--data",
             args.data,
         ]
+        if args.name:
+            train_cmd += ["--name", args.name]
+        if args.small_drone_crops:
+            train_cmd += ["--small-drone-crops", args.small_drone_crops]
         if args.relu:
             train_cmd.append("--relu")
         _run(train_cmd)

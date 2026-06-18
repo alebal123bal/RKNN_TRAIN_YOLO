@@ -51,12 +51,13 @@ def _patch_activations_relu(yolo_model):
 def train_model(
     img_size=640,
     batch_size=16,
-    epochs=100,
+    epochs=150,
     device="0",
     model="yolov8n",
     relu=False,
     data="dataset/data.yaml",
     name=None,
+    small_drone_crops=None,
 ):
     if name is None:
         name = model
@@ -97,6 +98,15 @@ def train_model(
         if relu:
             # Also patch any SiLU baked into the pickled pre-trained checkpoint.
             _patch_activations_relu(yolo_model)
+        if small_drone_crops:
+            # Synthetic distant-drone paste augmentation (training-time only).
+            from small_drone_paste import small_drone_paste, configure
+
+            configure(crops_dir=os.path.abspath(small_drone_crops))
+            yolo_model.add_callback("on_train_epoch_start", small_drone_paste)
+            print(
+                f"Small-drone paste augmentation enabled (crops: {small_drone_crops})"
+            )
         yolo_model.train(
             data=abs_data,
             epochs=epochs,
@@ -108,11 +118,26 @@ def train_model(
             exist_ok=True,
             # Augmentation tuned for dark/indoor deployment environments.
             # High hsv_v simulates brightness variation (bright training → dark deploy).
-            # High hsv_s covers desaturated/blueish scenes.
             # hsv_h slight increase handles cool/warm colour temperature shifts.
             hsv_h=0.03,  # hue shift  (default 0.015)
-            hsv_s=0.8,  # saturation (default 0.7)
             hsv_v=0.6,  # value/brightness (default 0.4) — key for dark basement
+            # --- Augmentation for small/distant drones + complex backgrounds ---
+            # Pastes drone instances onto (often complex-background) images so the
+            # model learns drones against cluttered scenes, not just flat skies.
+            copy_paste=0.5,
+            # Wide random object rescaling: the model sees drones across a broad
+            # range of apparent sizes, including very small / distant ones.
+            scale=0.9,
+            # Force mosaic on every batch: maximises object-size variety per batch.
+            mosaic=1.0,
+            # Lower saturation jitter reduces sensitivity to background colour/
+            # saturation, helping generalise across varied backgrounds.
+            hsv_s=0.4,  # (default 0.7)
+            # Random rotation: robustness to drones seen at arbitrary angles.
+            degrees=10,
+            # Cosine LR schedule over a longer run gives sharper convergence on
+            # this single-class detection problem.
+            cos_lr=True,
         )
         result = 0
     except Exception as exc:
@@ -155,7 +180,7 @@ if __name__ == "__main__":
         "--batch", type=int, default=16, help="Batch size (default: 16)"
     )
     parser.add_argument(
-        "--epochs", type=int, default=100, help="Number of epochs (default: 100)"
+        "--epochs", type=int, default=150, help="Number of epochs (default: 150)"
     )
     parser.add_argument(
         "--device",
@@ -180,6 +205,13 @@ if __name__ == "__main__":
         default=None,
         help="Run name under runs/train/ (default: the model variant)",
     )
+    parser.add_argument(
+        "--small-drone-crops",
+        type=str,
+        default=None,
+        help="Directory of drone crops to enable distant-drone paste augmentation "
+        "(build it once with build_drone_crops.py). Disabled if omitted.",
+    )
 
     args = parser.parse_args()
     train_model(
@@ -191,4 +223,5 @@ if __name__ == "__main__":
         relu=args.relu,
         data=args.data,
         name=args.name,
+        small_drone_crops=args.small_drone_crops,
     )
